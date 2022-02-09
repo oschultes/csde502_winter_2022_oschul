@@ -96,7 +96,11 @@ usbirths = read_hfd_countries_item(countries = "USA", item = "totbirthsRR")
 ```
 
 
-```{r plot}
+# Some interesting plots
+
+Total live births decreased in the three European countries of Italy, Spain, and France over the last half of the 20th century. This decrease was most pronounced in relative and absolute terms in Italy. Live births in the US decreased from the 1950s until 1975, then rose steadily until 2000.
+
+```{r plot1, fig.cap="Annual Live Births in Italy, Spain, and France"}
 library(scales)
 
 ggplot(data = births, aes(x=Year, y=Total)) +
@@ -113,15 +117,17 @@ ggplot(data = births, aes(x=Year, y=Total)) +
         axis.text = element_text(color="darkolivegreen"),
         text=element_text(color="darkolivegreen"))
 
-ggplot(data=usbirths, aes(x=Year, y=Total)) +
-  geom_area(color="darkslateblue", fill="darkslateblue") +
-  theme_light() +
-  labs(y="Total Live Births", title="Annual Live Births in US")
-  scale_y_continuous(labels=comma)
-
 ```
 
 
+```{r plot2, fig.cap="Annual Live Births in the US"}
+
+ggplot(data=usbirths, aes(x=Year, y=Total)) +
+  geom_area(color="darkslateblue", fill="darkslateblue") +
+  theme_light() +
+  labs(y="Total Live Births")
+  scale_y_continuous(labels=comma)
+```
 
 
 
