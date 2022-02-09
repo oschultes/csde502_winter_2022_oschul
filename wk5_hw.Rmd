@@ -1,0 +1,128 @@
+---
+title: "Assignment 5"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cntryidx}
+library(ISOcodes)
+library(HMDHFDplus)
+library(tidyverse)
+library(magrittr)
+
+# HFD country codes
+hfdcodes <- getHFDcountries() %>% tibble(ccode = .)
+
+# ISO country codes
+isocodes <- ISO_3166_1 %>% tibble() %>% select(ccode = Alpha_3, Name)
+
+# join ISO codes with country names
+hfdcodes %<>% left_join(isocodes, by = "ccode")
+
+# there are some countries in the HFD that do not use standard 3 character ISO codes
+hfdcodes %>% filter(is.na(Name))
+
+# update those
+hfdcodes %<>% 
+    mutate(Name = 
+        case_when(ccode == "FRATNP" ~  "France",
+                  ccode == "DEUTNP" ~  "Germany",
+                  ccode == "DEUTE" ~   "East Germany",
+                  ccode == "DEUTW" ~   "West Germany",
+                  ccode == "GBR_NP" ~  "United Kingdom", 
+                  ccode == "GBRTENW" ~ "England and Wales",
+                  ccode == "GBR_SCO" ~ "Scotland",
+                  ccode == "GBR_NIR" ~ "Northern Ireland",
+                  TRUE ~ Name)
+    )
+```
+
+
+```{r pullfnc}
+# a function to read HFD for one country and one item
+read_hfd_country <- function(CNTRY, item) {
+  HMDHFDplus::readHFDweb(
+    # the country from the function call
+    CNTRY = CNTRY,
+    # the item to download
+    item = item,
+    # the username from this key's record
+    username = keyring::key_list("human-fertility-database")$username,
+    # the password for this key's record
+    password = keyring::key_get(
+      service = "human-fertility-database",
+      username = keyring::key_list("human-fertility-database")$username
+    )
+  )
+}
+
+# Download a data set iteratively for all named countries using purrr::map()
+read_hfd_countries_item <- function(countries, item){
+    countries %>%
+        # Returns a list of data.frames, adding a column for country code to each
+        # the map() function performs a run of Ben's read_hmd_country() 
+        #   function for each listed country
+        purrr::map_dfr(function(ccode) {
+            # the item to read is 1 x 1 death rates
+            read_hfd_country(ccode, item) %>%
+                # this adds the column "country" storing the country ISO code
+                dplyr::mutate(ccode = ccode)
+        }) %>%
+        # Phil added this to make it a tibble
+        tibble() %>% 
+        # and add country name
+        left_join(hfdcodes, by = "ccode")
+}
+
+```
+
+
+```{r datpull}
+
+# pull some data
+CNTRIES <- hfdcodes %>% 
+    filter(Name %in% c("Italy", "Spain", "France")) %>% 
+    pull(ccode)
+
+births <- read_hfd_countries_item(countries = CNTRIES, item = "totbirthsRR")
+
+# pull more data
+
+usbirths = read_hfd_countries_item(countries = "USA", item = "totbirthsRR")
+```
+
+
+```{r plot}
+library(scales)
+
+ggplot(data = births, aes(x=Year, y=Total)) +
+  geom_line(color="darkolivegreen") +
+  theme_light() +
+  scale_y_continuous(labels = comma, limits=c(0,1050000)) +
+  labs(y = "Total Live Births") +
+  facet_wrap(Name~., ncol=1) +
+  theme(strip.background = element_rect(colour="darkolivegreen",
+                                        fill="white", size=1.5,
+                                        linetype="solid"),
+        strip.text.x = element_text(size=10,
+                                    color="darkolivegreen"),
+        axis.text = element_text(color="darkolivegreen"),
+        text=element_text(color="darkolivegreen"))
+
+ggplot(data=usbirths, aes(x=Year, y=Total)) +
+  geom_area(color="darkslateblue", fill="darkslateblue") +
+  theme_light() +
+  labs(y="Total Live Births", title="Annual Live Births in US")
+  scale_y_continuous(labels=comma)
+
+```
+
+
+
+
+
+
