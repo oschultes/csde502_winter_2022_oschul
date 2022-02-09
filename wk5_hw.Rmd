@@ -1,6 +1,17 @@
 ---
 title: "Assignment 5"
-output: html_document
+author: "[Olivia Schultes](oschul@uw.edu)"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+    html_document:
+        number_sections: true
+        self_contained: yes
+        code_folding: hide
+        toc: true
+        toc_float:
+            collapsed: true
+            smooth_scroll: false
+urlcolor: blue  
 ---
 
 ```{r setup, include=FALSE}
@@ -129,6 +140,14 @@ ggplot(data=usbirths, aes(x=Year, y=Total)) +
   scale_y_continuous(labels=comma)
 ```
 
+
+
+\pagebreak
+
+# Code Appendix
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
 
 
 
